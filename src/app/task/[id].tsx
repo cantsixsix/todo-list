@@ -1,0 +1,160 @@
+/**
+ * Edição completa de uma tarefa. Salva sozinho: título e notas quando o
+ * campo perde o foco; data, prioridade e lista na hora do toque.
+ */
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+
+import { confirm } from '@/components/confirm';
+import { DuePicker } from '@/components/DuePicker';
+import { EmptyState } from '@/components/EmptyState';
+import { Screen } from '@/components/Screen';
+import { Button, Chip, TextField, ThemedText } from '@/components/ui';
+import type { Priority } from '@/lib/types';
+import { useData } from '@/providers/DataProvider';
+import { PRIORITY_LABELS, priorityColor } from '@/theme/colors';
+import { useTheme } from '@/theme/ThemeProvider';
+
+export default function TaskDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
+  const { tasks, lists, editTask, toggleTask, removeTask } = useData();
+  const task = tasks.find((t) => t.id === id);
+
+  const [title, setTitle] = useState(task?.title ?? '');
+  const [notes, setNotes] = useState(task?.notes ?? '');
+
+  // Se a tarefa mudar em outro aparelho, atualiza só o campo que mudou
+  // (para não apagar o que a pessoa está digitando no outro campo).
+  // Padrão do React para "ajustar estado quando uma prop muda", sem useEffect.
+  const [prevTask, setPrevTask] = useState(task);
+  if (task !== prevTask) {
+    setPrevTask(task);
+    if (task && prevTask) {
+      if (task.title !== prevTask.title) setTitle(task.title);
+      if (task.notes !== prevTask.notes) setNotes(task.notes);
+    }
+  }
+
+  if (!task) {
+    return (
+      <Screen>
+        <EmptyState icon="alert-circle-outline" title="Tarefa não encontrada" subtitle="Ela pode ter sido apagada em outro aparelho." />
+      </Screen>
+    );
+  }
+
+  const saveTitle = () => {
+    const clean = title.trim();
+    if (!clean) setTitle(task.title);
+    else if (clean !== task.title) editTask(task.id, { title: clean });
+  };
+  const saveNotes = () => {
+    if (notes !== task.notes) editTask(task.id, { notes });
+  };
+
+  const onDelete = async () => {
+    if (await confirm('Apagar tarefa?', `"${task.title}" será apagada.`)) {
+      await removeTask(task.id);
+      router.back();
+    }
+  };
+
+  const done = task.completed_at !== null;
+
+  return (
+    <Screen>
+      <Stack.Screen options={{ title: done ? 'Concluída' : 'Tarefa' }} />
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <TextField
+            label="Título"
+            value={title}
+            onChangeText={setTitle}
+            onBlur={saveTitle}
+            onSubmitEditing={saveTitle}
+            maxLength={500}
+            returnKeyType="done"
+            style={styles.title}
+          />
+
+          <TextField
+            label="Notas"
+            value={notes}
+            onChangeText={setNotes}
+            onBlur={saveNotes}
+            placeholder="Detalhes, links, observações…"
+            multiline
+            maxLength={5000}
+            style={styles.notes}
+            textAlignVertical="top"
+          />
+
+          <Field label="Data">
+            <DuePicker value={task.due_date} onChange={(due_date) => editTask(task.id, { due_date })} />
+          </Field>
+
+          <Field label="Prioridade">
+            <View style={styles.row}>
+              {PRIORITY_LABELS.map((label, p) => (
+                <Chip
+                  key={label}
+                  label={label}
+                  color={p > 0 ? priorityColor(p, colors) : undefined}
+                  selected={task.priority === p}
+                  onPress={() => editTask(task.id, { priority: p as Priority })}
+                />
+              ))}
+            </View>
+          </Field>
+
+          <Field label="Lista">
+            <View style={styles.row}>
+              <Chip label="Nenhuma" selected={task.list_id === null} onPress={() => editTask(task.id, { list_id: null })} />
+              {lists.map((l) => (
+                <Chip
+                  key={l.id}
+                  label={l.name}
+                  color={l.color}
+                  selected={task.list_id === l.id}
+                  onPress={() => editTask(task.id, { list_id: l.id })}
+                />
+              ))}
+            </View>
+          </Field>
+
+          <Button title={done ? 'Marcar como pendente' : 'Concluir tarefa'} onPress={() => toggleTask(task.id)} />
+          <Button title="Apagar tarefa" variant="ghost" onPress={onDelete} />
+
+          <ThemedText muted style={styles.meta}>
+            Criada em {new Date(task.created_at).toLocaleString('pt-BR')}
+            {task.completed_at ? `\nConcluída em ${new Date(task.completed_at).toLocaleString('pt-BR')}` : ''}
+          </ThemedText>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Screen>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.field}>
+      <ThemedText muted style={styles.label}>
+        {label}
+      </ThemedText>
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  content: { padding: 16, gap: 20, paddingBottom: 48 },
+  title: { fontSize: 18, fontWeight: '600' },
+  notes: { minHeight: 110 },
+  field: { gap: 8 },
+  label: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  meta: { fontSize: 13, textAlign: 'center' },
+});
