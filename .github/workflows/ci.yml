@@ -1,0 +1,48 @@
+# Roda em todo push e pull request: tipos, lint, testes unitários,
+# build da versão web e teste E2E no navegador.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tipos (TypeScript)
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes unitários
+        run: npm test -- --ci
+
+      - name: Instalar Chromium para o E2E
+        run: npx playwright install --with-deps chromium
+
+      - name: Build web + teste E2E
+        run: npm run test:e2e
+
+      - name: Guardar screenshots do E2E
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: e2e/screenshots/
+          if-no-files-found: ignore

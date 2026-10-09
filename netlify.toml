@@ -1,0 +1,10 @@
+# Alternativa à Vercel: hospedagem da versão web na Netlify.
+[build]
+  command = "npx expo export --platform web"
+  publish = "dist"
+
+# App de página única: qualquer rota abre o index.html e o Expo Router decide a tela.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

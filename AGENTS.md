@@ -39,3 +39,11 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## This project
+
+- Data layer: Supabase. Schema changes go in a **new** file in `supabase/migrations/` (never edit an applied one); keep `src/lib/types.ts` in sync.
+- All reads/writes go through `src/providers/DataProvider.tsx` → `src/lib/api.ts`. Mutations must go through `mutate()` so they work offline (outbox).
+- Keep business logic pure in `src/lib/` and cover it with Jest tests in `src/lib/__tests__/`.
+- Before committing: `npm run check` (typecheck + lint + unit tests) and `npm run test:e2e` (web build + Playwright with a mocked Supabase).
+- Docs for humans (Portuguese): `README.md`, `docs/GUIA_DO_CODIGO.md`, `docs/PUBLICAR_PLAY_STORE.md`.
