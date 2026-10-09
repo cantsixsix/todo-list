@@ -35,6 +35,7 @@ const exp = Math.floor(Date.now() / 1000) + 3600;
 const TOKEN = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: USER.id, exp, role: 'authenticated', aud: 'authenticated', email: USER.email })}.sig`;
 const db = { tasks: [], lists: [] };
 const log = [];
+let offline = false;
 
 function matchFilter(row, url) {
   for (const [k, v] of url.searchParams) {
@@ -51,6 +52,7 @@ async function handle(route) {
   const method = req.method();
   const json = (status, body) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body), headers: { 'access-control-allow-origin': '*' } });
   if (method === 'OPTIONS') return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
+  if (offline && url.pathname.startsWith('/rest/')) return route.abort('internetdisconnected');
   log.push(`${method} ${url.pathname}${url.search}`);
 
   if (url.pathname === '/auth/v1/token') {
@@ -165,6 +167,22 @@ async function handle(route) {
     await page.getByText('Pagar conta de luz').filter({ visible: true }).first().waitFor();
     await shot(page, `${label}-06-concluidas`);
 
+    // Modo offline: alterações vão para a fila e sincronizam quando a internet volta
+    await page.getByRole('button', { name: /Todas/ }).filter({ visible: true }).first().click();
+    offline = true;
+    const add2 = page.getByLabel('Nova tarefa');
+    await add2.fill('Tarefa criada offline');
+    await add2.press('Enter');
+    await page.getByText(/Suas alterações serão enviadas/).filter({ visible: true }).first().waitFor();
+    await page.getByRole('checkbox', { name: 'Concluir tarefa' }).filter({ visible: true }).first().click();
+    await page.getByText(/Offline · 2 alterações/).filter({ visible: true }).first().waitFor();
+    await shot(page, `${label}-06b-offline`);
+    if (db.tasks.some((x) => x.title === 'Tarefa criada offline')) errors.push(`${label}: chegou ao servidor estando offline?`);
+    offline = false;
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await page.getByText(/Tudo sincronizado/).filter({ visible: true }).first().waitFor();
+    if (!db.tasks.some((x) => x.title === 'Tarefa criada offline')) errors.push(`${label}: tarefa offline não sincronizou`);
+
     // Ajustes
     await page.getByRole('tab', { name: /Ajustes/ }).or(page.getByRole('link', { name: /Ajustes/ })).first().click();
     await page.getByText('eden@example.com').filter({ visible: true }).first().waitFor();
@@ -184,8 +202,8 @@ async function handle(route) {
   await browser.close();
   server.close();
   console.log('requests:', log.length);
-  // O 400 do login com senha errada é proposital.
-  const real = errors.filter((e) => !/status of 400/.test(e));
+  // O 400 (senha errada) e a queda de internet são simulados de propósito.
+  const real = errors.filter((e) => !/status of 400|ERR_INTERNET_DISCONNECTED/.test(e));
   if (real.length) {
     console.error('ERROS:\n' + real.join('\n'));
     process.exit(1);

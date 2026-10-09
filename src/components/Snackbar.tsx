@@ -35,7 +35,7 @@ export function SnackbarProvider({ children }: { children: ReactNode }) {
       {message ? (
         <View
           pointerEvents="box-none"
-          style={[styles.container, { bottom: insets.bottom + 72 }]}
+          style={[styles.container, { bottom: insets.bottom + 136 }]}
           accessibilityLiveRegion="polite"
         >
           <View style={[styles.bar, { backgroundColor: message.error ? colors.danger : colors.text }]}>

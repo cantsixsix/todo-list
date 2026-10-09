@@ -6,8 +6,10 @@
  *  2. Busca a versão atual no servidor.
  *  3. Assina o "Realtime" do Supabase: mudanças feitas em outro aparelho
  *     (ex.: na versão web) chegam aqui em tempo real.
- *  4. Toda alteração é "otimista": a tela muda na hora e, se o servidor
- *     recusar, desfazemos e mostramos o erro.
+ *  4. Toda alteração é "otimista": a tela muda na hora.
+ *     - Sem internet? A alteração vai para a fila offline (outbox) e é
+ *       enviada sozinha quando a conexão voltar.
+ *     - O servidor recusou (ex.: dado inválido)? Desfazemos e mostramos o erro.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
@@ -22,16 +24,16 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
+import { useSnackbar } from '@/components/Snackbar';
 import * as api from '@/lib/api';
 import { patchById, removeById, upsertById } from '@/lib/collection';
+import { enqueue, isNetworkError, type Op } from '@/lib/outbox';
 import { supabase } from '@/lib/supabase';
 import { nextPosition } from '@/lib/tasks';
 import type { ListPatch, NewList, NewTask, Task, TaskList, TaskPatch } from '@/lib/types';
 import { uuid } from '@/lib/uuid';
-
-import { useSnackbar } from '@/components/Snackbar';
 
 import { useAuth } from './AuthProvider';
 
@@ -42,6 +44,8 @@ interface DataValue {
   loading: boolean;
   /** true enquanto puxa dados do servidor (pull-to-refresh). */
   refreshing: boolean;
+  /** Quantas alterações feitas offline ainda não chegaram ao servidor. */
+  pendingCount: number;
   refresh: () => Promise<void>;
   addTask: (task: NewTask) => Promise<Task | undefined>;
   editTask: (id: string, patch: TaskPatch) => Promise<void>;
@@ -62,6 +66,7 @@ interface Snapshot {
 }
 
 const cacheKey = (userId: string) => `data-cache:v1:${userId}`;
+const outboxKey = (userId: string) => `outbox:v1:${userId}`;
 
 /**
  * A `key` faz o React criar um estado novo do zero quando outra pessoa
@@ -82,6 +87,7 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
   const [data, setData] = useState<Snapshot>({ tasks: [], lists: [] });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   // Ref sempre com o estado mais recente — usada para desfazer alterações.
   const dataRef = useRef(data);
@@ -89,37 +95,80 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
     dataRef.current = data;
   }, [data]);
 
-  const fail = useCallback(
-    (e: unknown) => {
-      const msg = e instanceof Error ? e.message : String(e);
-      snack({ text: /fetch|network/i.test(msg) ? 'Sem conexão. Verifique sua internet e tente de novo.' : msg, error: true });
-    },
+  // Fila offline. Fica numa ref (não em state) porque é lida e alterada
+  // dentro de funções assíncronas; o contador visível fica em pendingCount.
+  const outbox = useRef<Op[]>([]);
+  const flushing = useRef(false);
+  const warnedOffline = useRef(false);
+
+  const saveOutbox = useCallback(() => {
+    setPendingCount(outbox.current.length);
+    if (userId) AsyncStorage.setItem(outboxKey(userId), JSON.stringify(outbox.current)).catch(() => {});
+  }, [userId]);
+
+  const showError = useCallback(
+    (e: unknown) => snack({ text: e instanceof Error ? e.message : String(e), error: true }),
     [snack],
   );
+
+  /** Envia a fila em ordem. Para no primeiro erro de rede (tenta de novo depois). */
+  const flush = useCallback(async (): Promise<boolean> => {
+    if (flushing.current) return false;
+    flushing.current = true;
+    try {
+      while (outbox.current.length) {
+        const op = outbox.current[0];
+        try {
+          await api.runOp(op);
+        } catch (e) {
+          if (isNetworkError(e)) return false;
+          // O servidor recusou de vez: descarta para não travar a fila.
+          showError(e);
+        }
+        outbox.current = outbox.current.slice(1);
+        saveOutbox();
+      }
+      if (warnedOffline.current) {
+        warnedOffline.current = false;
+        snack({ text: 'Conectado. Tudo sincronizado ✓' });
+      }
+      return true;
+    } finally {
+      flushing.current = false;
+    }
+  }, [saveOutbox, showError, snack]);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
     setRefreshing(true);
     try {
+      // Primeiro envia o que foi feito offline; senão o servidor "desfaria" isso.
+      if (!(await flush())) return;
       const [tasks, lists] = await Promise.all([api.fetchTasks(), api.fetchLists()]);
       setData({ tasks, lists });
     } catch (e) {
-      fail(e);
+      if (!isNetworkError(e)) showError(e);
     } finally {
       setRefreshing(false);
       setLoading(false);
     }
-  }, [userId, fail]);
+  }, [userId, flush, showError]);
 
-  // 1 + 2: cache local e depois servidor.
+  // 1 + 2: cache local (dados + fila offline) e depois servidor.
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    AsyncStorage.getItem(cacheKey(userId))
-      .then((raw) => {
-        if (cancelled || !raw) return;
-        setData(JSON.parse(raw) as Snapshot);
-        setLoading(false);
+    AsyncStorage.multiGet([cacheKey(userId), outboxKey(userId)])
+      .then(([[, cached], [, queued]]) => {
+        if (cancelled) return;
+        if (queued) {
+          outbox.current = JSON.parse(queued) as Op[];
+          setPendingCount(outbox.current.length);
+        }
+        if (cached) {
+          setData(JSON.parse(cached) as Snapshot);
+          setLoading(false);
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -139,13 +188,25 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
     return () => clearTimeout(t);
   }, [data, userId, loading]);
 
-  // Ao voltar para o app, busca novidades.
+  // Ao voltar para o app (ou a internet voltar, na web), sincroniza.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
       if (s === 'active') refresh();
     });
-    return () => sub.remove();
+    const onOnline = () => refresh();
+    if (Platform.OS === 'web') window.addEventListener('online', onOnline);
+    return () => {
+      sub.remove();
+      if (Platform.OS === 'web') window.removeEventListener('online', onOnline);
+    };
   }, [refresh]);
+
+  // Enquanto houver pendências, tenta reenviar a cada 15 s.
+  useEffect(() => {
+    if (pendingCount === 0) return;
+    const t = setInterval(() => flush(), 15_000);
+    return () => clearInterval(t);
+  }, [pendingCount, flush]);
 
   // 3: tempo real.
   useEffect(() => {
@@ -172,20 +233,33 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
     };
   }, [userId]);
 
-  /** Executa uma alteração otimista; se falhar, volta ao estado anterior. */
-  const optimistic = useCallback(
-    async <R,>(change: (prev: Snapshot) => Snapshot, request: () => Promise<R>): Promise<R | undefined> => {
+  /**
+   * Aplica a alteração na tela e envia ao servidor.
+   * Sem internet → fila offline. Recusado pelo servidor → desfaz.
+   */
+  const mutate = useCallback(
+    async (change: (prev: Snapshot) => Snapshot, op: Op): Promise<void> => {
       const before = dataRef.current;
       setData(change);
+      const queue = (o: Op) => {
+        outbox.current = enqueue(outbox.current, o);
+        saveOutbox();
+        if (!warnedOffline.current) {
+          warnedOffline.current = true;
+          snack({ text: 'Sem internet. Suas alterações serão enviadas quando a conexão voltar.' });
+        }
+      };
+      // Se já há pendências, entra na fila para manter a ordem das alterações.
+      if (outbox.current.length) return queue(op);
       try {
-        return await request();
+        await api.runOp(op);
       } catch (e) {
+        if (isNetworkError(e)) return queue(op);
         setData(before);
-        fail(e);
-        return undefined;
+        showError(e);
       }
     },
-    [fail],
+    [saveOutbox, showError, snack],
   );
 
   const value = useMemo<DataValue>(() => {
@@ -194,6 +268,7 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
       ...data,
       loading,
       refreshing,
+      pendingCount,
       refresh,
 
       async addTask(input) {
@@ -211,71 +286,53 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
           created_at: now(),
           updated_at: now(),
         };
-        const saved = await optimistic(
-          (p) => ({ ...p, tasks: [...p.tasks, draft] }),
-          () =>
-            api.insertTask({
-              id: draft.id,
-              title: draft.title,
-              notes: draft.notes,
-              list_id: draft.list_id,
-              due_date: draft.due_date,
-              priority: draft.priority,
-              position: draft.position,
-            }),
-        );
-        if (saved) setData((p) => ({ ...p, tasks: upsertById(p.tasks, saved) }));
-        return saved;
+        const { id, title, notes, list_id, due_date, priority, position } = draft;
+        await mutate((p) => ({ ...p, tasks: [...p.tasks, draft] }), {
+          kind: 'insertTask',
+          row: { id, title, notes, list_id, due_date, priority, position },
+        });
+        return draft;
       },
 
       async editTask(id, patch) {
-        await optimistic(
-          (p) => ({ ...p, tasks: patchById(p.tasks, id, { ...patch, updated_at: now() }) }),
-          () => api.updateTask(id, patch),
-        );
+        await mutate((p) => ({ ...p, tasks: patchById(p.tasks, id, { ...patch, updated_at: now() }) }), {
+          kind: 'updateTask',
+          id,
+          patch,
+        });
       },
 
       async toggleTask(id) {
         const task = dataRef.current.tasks.find((t) => t.id === id);
         if (!task) return;
         const completed_at = task.completed_at ? null : now();
-        await optimistic(
-          (p) => ({ ...p, tasks: patchById(p.tasks, id, { completed_at }) }),
-          () => api.updateTask(id, { completed_at }),
-        );
+        await mutate((p) => ({ ...p, tasks: patchById(p.tasks, id, { completed_at }) }), {
+          kind: 'updateTask',
+          id,
+          patch: { completed_at },
+        });
       },
 
       async removeTask(id) {
         const task = dataRef.current.tasks.find((t) => t.id === id);
         if (!task) return;
-        await optimistic((p) => ({ ...p, tasks: removeById(p.tasks, id) }), () => api.deleteTask(id));
+        await mutate((p) => ({ ...p, tasks: removeById(p.tasks, id) }), { kind: 'deleteTask', id });
         return task;
       },
 
       /** Usado pelo botão "Desfazer" depois de apagar. */
       async restoreTask(task) {
-        await optimistic(
-          (p) => ({ ...p, tasks: upsertById(p.tasks, task) }),
-          () =>
-            api.insertTask({
-              id: task.id,
-              title: task.title,
-              notes: task.notes,
-              list_id: task.list_id,
-              due_date: task.due_date,
-              priority: task.priority,
-              position: task.position,
-            }).then((saved) =>
-              task.completed_at ? api.updateTask(saved.id, { completed_at: task.completed_at }) : saved,
-            ),
-        );
+        const { id, title, notes, list_id, due_date, priority, position, completed_at } = task;
+        await mutate((p) => ({ ...p, tasks: upsertById(p.tasks, task) }), {
+          kind: 'insertTask',
+          row: { id, title, notes, list_id, due_date, priority, position, completed_at },
+        });
       },
 
       async clearCompleted() {
-        await optimistic(
-          (p) => ({ ...p, tasks: p.tasks.filter((t) => t.completed_at === null) }),
-          () => api.deleteCompletedTasks(),
-        );
+        await mutate((p) => ({ ...p, tasks: p.tasks.filter((t) => t.completed_at === null) }), {
+          kind: 'deleteCompleted',
+        });
       },
 
       async addList(input) {
@@ -289,30 +346,31 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
           created_at: now(),
           updated_at: now(),
         };
-        const saved = await optimistic(
-          (p) => ({ ...p, lists: [...p.lists, draft] }),
-          () => api.insertList({ id: draft.id, name: draft.name, color: draft.color, position: draft.position }),
-        );
-        if (saved) setData((p) => ({ ...p, lists: upsertById(p.lists, saved) }));
-        return saved;
+        const { id, name, color, position } = draft;
+        await mutate((p) => ({ ...p, lists: [...p.lists, draft] }), {
+          kind: 'insertList',
+          row: { id, name, color, position },
+        });
+        return draft;
       },
 
       async editList(id, patch) {
-        await optimistic(
-          (p) => ({ ...p, lists: patchById(p.lists, id, { ...patch, updated_at: now() }) }),
-          () => api.updateList(id, patch),
-        );
+        await mutate((p) => ({ ...p, lists: patchById(p.lists, id, { ...patch, updated_at: now() }) }), {
+          kind: 'updateList',
+          id,
+          patch,
+        });
       },
 
       async removeList(id) {
         // O banco apaga as tarefas da lista junto (on delete cascade).
-        await optimistic(
+        await mutate(
           (p) => ({ lists: removeById(p.lists, id), tasks: p.tasks.filter((t) => t.list_id !== id) }),
-          () => api.deleteList(id),
+          { kind: 'deleteList', id },
         );
       },
     };
-  }, [data, loading, refreshing, refresh, userId, optimistic]);
+  }, [data, loading, refreshing, pendingCount, refresh, userId, mutate]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

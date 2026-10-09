@@ -3,7 +3,8 @@
  * busca e o campo de adicionar rápido.
  */
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { EmptyState } from '@/components/EmptyState';
 import { QuickAdd } from '@/components/QuickAdd';
@@ -32,7 +33,7 @@ const EMPTY: Record<SmartFilter, { icon: 'sunny-outline' | 'calendar-outline' | 
 
 export default function TasksScreen() {
   const { colors } = useTheme();
-  const { tasks, loading, addTask, clearCompleted } = useData();
+  const { tasks, loading, pendingCount, addTask, clearCompleted } = useData();
   const [filter, setFilter] = useState<SmartFilter>('today');
   const [query, setQuery] = useState('');
 
@@ -55,6 +56,18 @@ export default function TasksScreen() {
     <Screen>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
         <View style={styles.top}>
+          {pendingCount > 0 ? (
+            <View
+              style={[styles.offline, { backgroundColor: colors.surfaceAlt }]}
+              accessibilityRole="alert"
+              accessibilityLabel={`Offline: ${pendingCount} alterações aguardando conexão`}
+            >
+              <Ionicons name="cloud-offline-outline" size={16} color={colors.warning} />
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>
+                Offline · {pendingCount} {pendingCount === 1 ? 'alteração aguardando' : 'alterações aguardando'} conexão
+              </Text>
+            </View>
+          ) : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
             {FILTERS.map((f) => (
               <Chip
@@ -108,6 +121,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   top: { paddingHorizontal: 16, paddingTop: 8, gap: 12 },
   chips: { gap: 8 },
+  offline: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   loading: { marginTop: 48 },
   bottom: { padding: 12 },
   clear: { alignSelf: 'flex-end', marginRight: 8 },

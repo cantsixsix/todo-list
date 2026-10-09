@@ -2,12 +2,23 @@
  * Camada de acesso ao banco. As telas nunca falam com o Supabase direto:
  * passam por aqui (via DataProvider), o que deixa o resto do app simples.
  */
+import type { Op } from './outbox';
 import { supabase } from './supabase';
 import type { ListPatch, NewList, NewTask, Task, TaskList, TaskPatch } from './types';
 
+/** Erro do banco com o código do Postgres/PostgREST (ex.: 23505 = chave duplicada). */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+  ) {
+    super(message);
+  }
+}
+
 /** Transforma o erro do Supabase numa exceção normal. */
-function unwrap<T>({ data, error }: { data: T | null; error: { message: string } | null }): T {
-  if (error) throw new Error(error.message);
+function unwrap<T>({ data, error }: { data: T | null; error: { message: string; code?: string } | null }): T {
+  if (error) throw new ApiError(error.message, error.code);
   return data as T;
 }
 
@@ -20,7 +31,9 @@ export async function fetchLists(): Promise<TaskList[]> {
 }
 
 /** `id` é gerado no app para a interface poder mostrar a tarefa antes da resposta do servidor. */
-export async function insertTask(task: NewTask & { id: string; position: number }): Promise<Task> {
+export async function insertTask(
+  task: NewTask & { id: string; position: number; completed_at?: string | null },
+): Promise<Task> {
   return unwrap(await supabase.from('tasks').insert(task).select().single());
 }
 
@@ -50,4 +63,37 @@ export async function deleteList(id: string): Promise<void> {
 
 export async function deleteMyAccount(): Promise<void> {
   unwrap(await supabase.rpc('delete_my_account'));
+}
+
+/**
+ * Executa uma operação da fila offline. Pensado para ser seguro repetir:
+ *  - "criar" que já chegou ao servidor (resposta perdida) → chave duplicada → ok
+ *  - "editar" algo que foi apagado em outro aparelho → nenhuma linha → ok
+ */
+export async function runOp(op: Op): Promise<void> {
+  try {
+    switch (op.kind) {
+      case 'insertTask':
+        await insertTask(op.row);
+        return;
+      case 'updateTask':
+        await updateTask(op.id, op.patch);
+        return;
+      case 'deleteTask':
+        return deleteTask(op.id);
+      case 'deleteCompleted':
+        return deleteCompletedTasks();
+      case 'insertList':
+        await insertList(op.row);
+        return;
+      case 'updateList':
+        await updateList(op.id, op.patch);
+        return;
+      case 'deleteList':
+        return deleteList(op.id);
+    }
+  } catch (e) {
+    if (e instanceof ApiError && (e.code === '23505' || e.code === 'PGRST116')) return;
+    throw e;
+  }
 }
