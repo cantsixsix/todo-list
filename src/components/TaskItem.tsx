@@ -64,7 +64,7 @@ function TaskItemBase({ task, list, onToggle, onLongPress }: Props) {
         >
           {task.title}
         </Text>
-        {task.due_date || list || task.notes ? (
+        {task.due_date || list || task.notes || task.recurrence ? (
           <View style={styles.meta}>
             {task.due_date ? (
               <View style={styles.metaItem}>
@@ -73,6 +73,9 @@ function TaskItemBase({ task, list, onToggle, onLongPress }: Props) {
                   {formatDueDate(task.due_date)}
                 </Text>
               </View>
+            ) : null}
+            {task.recurrence ? (
+              <Ionicons name="repeat" size={14} color={colors.textMuted} accessibilityLabel="Tarefa recorrente" />
             ) : null}
             {task.notes ? <Ionicons name="document-text-outline" size={13} color={colors.textMuted} /> : null}
             {list ? (

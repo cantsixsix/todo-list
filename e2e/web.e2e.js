@@ -72,7 +72,7 @@ async function handle(route) {
       const now = new Date().toISOString();
       const input = req.postDataJSON();
       const row = m[1] === 'tasks'
-        ? { user_id: USER.id, list_id: null, notes: '', due_date: null, priority: 0, completed_at: null, position: 0, created_at: now, updated_at: now, ...input }
+        ? { user_id: USER.id, list_id: null, notes: '', due_date: null, priority: 0, recurrence: null, completed_at: null, position: 0, created_at: now, updated_at: now, ...input }
         : { user_id: USER.id, color: '#4F46E5', position: 0, created_at: now, updated_at: now, ...input };
       table.push(row);
       return json(201, single ? row : [row]);
@@ -158,6 +158,19 @@ async function handle(route) {
     await shot(page, `${label}-05-detalhe`);
     await page.getByRole('button', { name: 'Concluir tarefa' }).filter({ visible: true }).first().click();
     await page.getByRole('button', { name: 'Marcar como pendente' }).waitFor();
+
+    // Tarefa recorrente: concluir avança a data em vez de concluir
+    await page.goto('http://localhost:8089/');
+    await page.getByRole('button', { name: /Todas/ }).filter({ visible: true }).first().click();
+    await page.getByText('Comprar café').filter({ visible: true }).first().click();
+    await page.getByRole('button', { name: 'Toda semana' }).filter({ visible: true }).first().click();
+    await page.getByRole('button', { name: 'Concluir e agendar a próxima' }).filter({ visible: true }).first().click();
+    await page.getByText(/Próxima vez:/).filter({ visible: true }).first().waitFor();
+    await shot(page, `${label}-05b-recorrente`);
+    const cafe = db.tasks.find((x) => x.title === 'Comprar café');
+    const todayIso = new Date().toLocaleDateString('sv-SE');
+    if (!cafe || cafe.recurrence !== 'weekly' || cafe.completed_at || !cafe.due_date || cafe.due_date <= todayIso)
+      errors.push(`${label}: recorrência não aplicada: ${JSON.stringify(cafe)}`);
 
     // Concluir pela caixinha na tela principal
     await page.goto('http://localhost:8089/');

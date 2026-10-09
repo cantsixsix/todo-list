@@ -11,6 +11,8 @@ import { DuePicker } from '@/components/DuePicker';
 import { EmptyState } from '@/components/EmptyState';
 import { Screen } from '@/components/Screen';
 import { Button, Chip, TextField, ThemedText } from '@/components/ui';
+import { toISODate } from '@/lib/dates';
+import { RECURRENCE_LABELS, RECURRENCES } from '@/lib/recurrence';
 import type { Priority } from '@/lib/types';
 import { useData } from '@/providers/DataProvider';
 import { PRIORITY_LABELS, priorityColor } from '@/theme/colors';
@@ -109,6 +111,27 @@ export default function TaskDetailScreen() {
             </View>
           </Field>
 
+          <Field label="Repetir">
+            <View style={styles.row}>
+              <Chip
+                label="Não repete"
+                selected={task.recurrence === null}
+                onPress={() => editTask(task.id, { recurrence: null })}
+              />
+              {RECURRENCES.map((r) => (
+                <Chip
+                  key={r}
+                  label={RECURRENCE_LABELS[r]}
+                  selected={task.recurrence === r}
+                  // Repetição sem data começa hoje, para aparecer em "Hoje".
+                  onPress={() =>
+                    editTask(task.id, task.due_date ? { recurrence: r } : { recurrence: r, due_date: toISODate(new Date()) })
+                  }
+                />
+              ))}
+            </View>
+          </Field>
+
           <Field label="Lista">
             <View style={styles.row}>
               <Chip label="Nenhuma" selected={task.list_id === null} onPress={() => editTask(task.id, { list_id: null })} />
@@ -124,7 +147,8 @@ export default function TaskDetailScreen() {
             </View>
           </Field>
 
-          <Button title={done ? 'Marcar como pendente' : 'Concluir tarefa'} onPress={() => toggleTask(task.id)} />
+          <Button
+            title={done ? 'Marcar como pendente' : task.recurrence ? 'Concluir e agendar a próxima' : 'Concluir tarefa'} onPress={() => toggleTask(task.id)} />
           <Button title="Apagar tarefa" variant="ghost" onPress={onDelete} />
 
           <ThemedText muted style={styles.meta}>

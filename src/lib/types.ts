@@ -1,6 +1,9 @@
 /** Prioridade: 0 = nenhuma, 1 = baixa, 2 = média, 3 = alta (igual ao banco). */
 export type Priority = 0 | 1 | 2 | 3;
 
+/** Como uma tarefa se repete (null = não repete). */
+export type Recurrence = 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'yearly';
+
 /** Uma linha da tabela `lists`. */
 export interface TaskList {
   id: string;
@@ -22,6 +25,7 @@ export interface Task {
   /** Data no formato YYYY-MM-DD (sem horário), ou null. */
   due_date: string | null;
   priority: Priority;
+  recurrence: Recurrence | null;
   completed_at: string | null;
   position: number;
   created_at: string;
@@ -29,10 +33,12 @@ export interface Task {
 }
 
 /** Campos que o usuário pode enviar ao criar uma tarefa. */
-export type NewTask = Pick<Task, 'title'> & Partial<Pick<Task, 'list_id' | 'notes' | 'due_date' | 'priority'>>;
+export type NewTask = Pick<Task, 'title'> & Partial<Pick<Task, 'list_id' | 'notes' | 'due_date' | 'priority' | 'recurrence'>>;
 
 /** Campos que o usuário pode alterar numa tarefa. */
-export type TaskPatch = Partial<Pick<Task, 'title' | 'notes' | 'due_date' | 'priority' | 'completed_at' | 'list_id' | 'position'>>;
+export type TaskPatch = Partial<
+  Pick<Task, 'title' | 'notes' | 'due_date' | 'priority' | 'recurrence' | 'completed_at' | 'list_id' | 'position'>
+>;
 
 export type NewList = Pick<TaskList, 'name'> & Partial<Pick<TaskList, 'color'>>;
 export type ListPatch = Partial<Pick<TaskList, 'name' | 'color' | 'position'>>;

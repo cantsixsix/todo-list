@@ -29,7 +29,9 @@ import { AppState, Platform } from 'react-native';
 import { useSnackbar } from '@/components/Snackbar';
 import * as api from '@/lib/api';
 import { patchById, removeById, upsertById } from '@/lib/collection';
+import { formatDueDate } from '@/lib/dates';
 import { enqueue, isNetworkError, type Op } from '@/lib/outbox';
+import { nextOccurrence } from '@/lib/recurrence';
 import { supabase } from '@/lib/supabase';
 import { nextPosition } from '@/lib/tasks';
 import type { ListPatch, NewList, NewTask, Task, TaskList, TaskPatch } from '@/lib/types';
@@ -281,15 +283,16 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
           notes: input.notes ?? '',
           due_date: input.due_date ?? null,
           priority: input.priority ?? 0,
+          recurrence: input.recurrence ?? null,
           completed_at: null,
           position: nextPosition(dataRef.current.tasks),
           created_at: now(),
           updated_at: now(),
         };
-        const { id, title, notes, list_id, due_date, priority, position } = draft;
+        const { id, title, notes, list_id, due_date, priority, recurrence, position } = draft;
         await mutate((p) => ({ ...p, tasks: [...p.tasks, draft] }), {
           kind: 'insertTask',
-          row: { id, title, notes, list_id, due_date, priority, position },
+          row: { id, title, notes, list_id, due_date, priority, recurrence, position },
         });
         return draft;
       },
@@ -305,6 +308,17 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
       async toggleTask(id) {
         const task = dataRef.current.tasks.find((t) => t.id === id);
         if (!task) return;
+        // Recorrente: em vez de concluir, avança para a próxima data.
+        if (task.recurrence && !task.completed_at) {
+          const due_date = nextOccurrence(task.due_date, task.recurrence);
+          snack({ text: `Feito! Próxima vez: ${formatDueDate(due_date)}` });
+          await mutate((p) => ({ ...p, tasks: patchById(p.tasks, id, { due_date, updated_at: now() }) }), {
+            kind: 'updateTask',
+            id,
+            patch: { due_date },
+          });
+          return;
+        }
         const completed_at = task.completed_at ? null : now();
         await mutate((p) => ({ ...p, tasks: patchById(p.tasks, id, { completed_at }) }), {
           kind: 'updateTask',
@@ -322,10 +336,10 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
 
       /** Usado pelo botão "Desfazer" depois de apagar. */
       async restoreTask(task) {
-        const { id, title, notes, list_id, due_date, priority, position, completed_at } = task;
+        const { id, title, notes, list_id, due_date, priority, recurrence, position, completed_at } = task;
         await mutate((p) => ({ ...p, tasks: upsertById(p.tasks, task) }), {
           kind: 'insertTask',
-          row: { id, title, notes, list_id, due_date, priority, position, completed_at },
+          row: { id, title, notes, list_id, due_date, priority, recurrence, position, completed_at },
         });
       },
 
@@ -370,7 +384,7 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
         );
       },
     };
-  }, [data, loading, refreshing, pendingCount, refresh, userId, mutate]);
+  }, [data, loading, refreshing, pendingCount, refresh, userId, mutate, snack]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

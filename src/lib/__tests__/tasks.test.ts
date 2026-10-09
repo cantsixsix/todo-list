@@ -23,6 +23,7 @@ function task(over: Partial<Task> = {}): Task {
     notes: '',
     due_date: null,
     priority: 0,
+    recurrence: null,
     completed_at: null,
     position: seq,
     created_at: `2026-10-01T00:00:0${seq % 10}Z`,

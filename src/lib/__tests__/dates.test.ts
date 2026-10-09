@@ -1,6 +1,6 @@
 import { addDays, daysBetween, formatDueDate, nextMonday, parseDateInput, toISODate } from '../dates';
 
-// Quinta-feira, 9 de outubro de 2026 — data fixa para os testes serem determinísticos.
+// Sexta-feira, 9 de outubro de 2026 — data fixa para os testes serem determinísticos.
 const TODAY = new Date(2026, 9, 9);
 
 describe('toISODate / addDays', () => {
@@ -20,7 +20,7 @@ describe('daysBetween', () => {
 });
 
 describe('nextMonday', () => {
-  it('a partir de quinta vai para a segunda seguinte', () => {
+  it('a partir de sexta vai para a segunda seguinte', () => {
     expect(toISODate(nextMonday(TODAY))).toBe('2026-10-12');
   });
   it('a partir de segunda vai para a próxima semana', () => {
