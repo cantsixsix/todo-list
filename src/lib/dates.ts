@@ -86,3 +86,22 @@ export function parseDateInput(input: string, today: Date = new Date()): string 
   if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return null;
   return toISODate(date);
 }
+
+const WEEKDAYS_LONG = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+const MONTHS_LONG = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+];
+
+/** "sexta-feira, 9 de outubro" (sem depender do Intl, que varia entre aparelhos). */
+export function formatLongDate(date: Date = new Date()): string {
+  return `${WEEKDAYS_LONG[date.getDay()]}, ${date.getDate()} de ${MONTHS_LONG[date.getMonth()]}`;
+}
+
+/** "Bom dia" (5h–11h), "Boa tarde" (12h–17h) ou "Boa noite". */
+export function greeting(date: Date = new Date()): string {
+  const h = date.getHours();
+  if (h >= 5 && h < 12) return 'Bom dia';
+  if (h >= 12 && h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}

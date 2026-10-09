@@ -2,13 +2,14 @@
  * Lista de tarefas com seções (Atrasadas, Hoje…), puxar-para-atualizar
  * e "segurar para apagar" com opção de desfazer.
  */
-import { Platform, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
 import { useCallback, useMemo } from 'react';
+import { Platform, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import type { TaskSection } from '@/lib/tasks';
 import type { Task } from '@/lib/types';
 import { useData } from '@/providers/DataProvider';
 import { useTheme } from '@/theme/ThemeProvider';
+import { space, type } from '@/theme/tokens';
 
 import { useSnackbar } from './Snackbar';
 import { TaskItem } from './TaskItem';
@@ -46,28 +47,28 @@ export function TaskSectionList({
     <SectionList
       sections={sections}
       keyExtractor={(t) => t.id}
-      renderItem={({ item }) => (
+      renderItem={({ item, index, section }) => (
         <TaskItem
           task={item}
           list={showList && item.list_id ? listById[item.list_id] : undefined}
+          first={index === 0}
+          last={index === section.data.length - 1}
           onToggle={toggleTask}
           onLongPress={onLongPress}
         />
       )}
-      renderSectionHeader={
-        showSectionHeaders
-          ? ({ section }) => (
-              <View style={[styles.header, { backgroundColor: colors.background }]}>
-                <Text
-                  style={[styles.headerText, { color: section.key === 'overdue' ? colors.danger : colors.textMuted }]}
-                >
-                  {section.title} · {section.data.length}
-                </Text>
-              </View>
-            )
-          : undefined
+      renderSectionHeader={({ section }) =>
+        showSectionHeaders ? (
+          <View style={styles.header}>
+            <Text style={[type.overline, { color: section.key === 'overdue' ? colors.danger : colors.textMuted }]}>
+              {section.title}
+            </Text>
+            <Text style={[type.overline, { color: colors.textSubtle }]}>{section.data.length}</Text>
+          </View>
+        ) : (
+          <View style={{ height: space.md }} />
+        )
       }
-      ItemSeparatorComponent={() => <View style={[styles.sep, { backgroundColor: colors.border }]} />}
       ListEmptyComponent={ListEmptyComponent}
       ListHeaderComponent={ListHeaderComponent}
       stickySectionHeadersEnabled={false}
@@ -83,8 +84,13 @@ export function TaskSectionList({
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 120 },
-  header: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 8 },
-  headerText: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  sep: { height: StyleSheet.hairlineWidth, marginLeft: 52 },
+  content: { paddingBottom: 140 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingHorizontal: space.lg + space.xs,
+    paddingTop: space.xl,
+    paddingBottom: space.sm,
+  },
 });

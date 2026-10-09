@@ -132,7 +132,7 @@ function DataStore({ userId, children }: { userId: string | null; children: Reac
       }
       if (warnedOffline.current) {
         warnedOffline.current = false;
-        snack({ text: 'Conectado. Tudo sincronizado ✓' });
+        snack({ text: 'Conectado. Tudo sincronizado.' });
       }
       return true;
     } finally {

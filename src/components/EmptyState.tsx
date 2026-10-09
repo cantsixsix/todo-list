@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/theme/ThemeProvider';
+import { space } from '@/theme/tokens';
 
 import { ThemedText } from './ui';
 
@@ -17,10 +18,17 @@ export function EmptyState({
   const { colors } = useTheme();
   return (
     <View style={styles.wrap}>
-      <Ionicons name={icon} size={56} color={colors.border} />
-      <ThemedText style={styles.title}>{title}</ThemedText>
+      {/* Círculos concêntricos: dão "peso" de ilustração sem precisar de imagem. */}
+      <View style={[styles.halo, { backgroundColor: colors.primarySoft, opacity: 0.5 }]}>
+        <View style={[styles.circle, { backgroundColor: colors.primarySoft }]}>
+          <Ionicons name={icon} size={34} color={colors.primary} />
+        </View>
+      </View>
+      <ThemedText variant="heading" style={styles.center}>
+        {title}
+      </ThemedText>
       {subtitle ? (
-        <ThemedText muted style={styles.subtitle}>
+        <ThemedText muted variant="small" style={styles.center}>
           {subtitle}
         </ThemedText>
       ) : null}
@@ -29,7 +37,8 @@ export function EmptyState({
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: 64, paddingHorizontal: 32, gap: 8 },
-  title: { fontSize: 18, fontWeight: '600', textAlign: 'center' },
-  subtitle: { textAlign: 'center', fontSize: 15 },
+  wrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xxxl, paddingHorizontal: space.xxl, gap: space.sm },
+  halo: { width: 116, height: 116, borderRadius: 58, alignItems: 'center', justifyContent: 'center', marginBottom: space.md },
+  circle: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
+  center: { textAlign: 'center', maxWidth: 320 },
 });

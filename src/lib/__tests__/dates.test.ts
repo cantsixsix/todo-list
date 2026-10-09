@@ -1,4 +1,4 @@
-import { addDays, daysBetween, formatDueDate, nextMonday, parseDateInput, toISODate } from '../dates';
+import { addDays, daysBetween, formatDueDate, formatLongDate, greeting, nextMonday, parseDateInput, toISODate } from '../dates';
 
 // Sexta-feira, 9 de outubro de 2026 — data fixa para os testes serem determinísticos.
 const TODAY = new Date(2026, 9, 9);
@@ -53,5 +53,19 @@ describe('parseDateInput', () => {
   });
   it.each(['', 'ontem?', '31/02', '2026-13-01'])('rejeita %p', (input) => {
     expect(parseDateInput(input, TODAY)).toBeNull();
+  });
+});
+
+describe('formatLongDate / greeting', () => {
+  it('data por extenso', () => {
+    expect(formatLongDate(TODAY)).toBe('sexta-feira, 9 de outubro');
+  });
+  it.each([
+    [7, 'Bom dia'],
+    [12, 'Boa tarde'],
+    [19, 'Boa noite'],
+    [2, 'Boa noite'],
+  ])('%sh → %s', (h, text) => {
+    expect(greeting(new Date(2026, 9, 9, h))).toBe(text);
   });
 });

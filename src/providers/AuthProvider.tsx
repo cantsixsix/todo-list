@@ -14,8 +14,11 @@ interface AuthValue {
   /** true até sabermos se existe uma sessão salva no aparelho. */
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Nome de exibição (guardado no perfil do usuário no Supabase Auth). */
+  displayName: string;
   /** Retorna true se o Supabase pediu confirmação por e-mail. */
-  signUp: (email: string, password: string) => Promise<boolean>;
+  signUp: (name: string, email: string, password: string) => Promise<boolean>;
+  updateName: (name: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -52,11 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(translateAuthError(error.message));
       },
-      async signUp(email, password) {
+      displayName: nameOf(session),
+      async signUp(name, email, password) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: redirectUrl('') },
+          options: { emailRedirectTo: redirectUrl(''), data: { name: name.trim() } },
         });
         if (error) throw new Error(translateAuthError(error.message));
         return data.session === null;
@@ -65,6 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: redirectUrl('reset-password'),
         });
+        if (error) throw new Error(translateAuthError(error.message));
+      },
+      async updateName(name) {
+        const { error } = await supabase.auth.updateUser({ data: { name: name.trim() } });
         if (error) throw new Error(translateAuthError(error.message));
       },
       async updatePassword(password) {
@@ -90,6 +98,14 @@ export function useAuth(): AuthValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth precisa estar dentro de <AuthProvider>');
   return ctx;
+}
+
+/** Nome salvo no cadastro; sem nome, usa a parte do e-mail antes do @. */
+function nameOf(session: Session | null): string {
+  const meta = session?.user.user_metadata as { name?: string } | undefined;
+  if (meta?.name) return meta.name;
+  const email = session?.user.email ?? '';
+  return email.split('@')[0] ?? '';
 }
 
 /** Mensagens do Supabase vêm em inglês; traduzimos as mais comuns. */

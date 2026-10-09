@@ -10,13 +10,14 @@ import { confirm } from '@/components/confirm';
 import { DuePicker } from '@/components/DuePicker';
 import { EmptyState } from '@/components/EmptyState';
 import { Screen } from '@/components/Screen';
-import { Button, Chip, TextField, ThemedText } from '@/components/ui';
+import { Button, Card, Chip, TextField, ThemedText } from '@/components/ui';
 import { toISODate } from '@/lib/dates';
 import { RECURRENCE_LABELS, RECURRENCES } from '@/lib/recurrence';
 import type { Priority } from '@/lib/types';
 import { useData } from '@/providers/DataProvider';
 import { PRIORITY_LABELS, priorityColor } from '@/theme/colors';
 import { useTheme } from '@/theme/ThemeProvider';
+import { space } from '@/theme/tokens';
 
 export default function TaskDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -103,6 +104,7 @@ export default function TaskDetailScreen() {
                 <Chip
                   key={label}
                   label={label}
+                  icon={p > 0 ? 'flag' : undefined}
                   color={p > 0 ? priorityColor(p, colors) : undefined}
                   selected={task.priority === p}
                   onPress={() => editTask(task.id, { priority: p as Priority })}
@@ -121,6 +123,7 @@ export default function TaskDetailScreen() {
               {RECURRENCES.map((r) => (
                 <Chip
                   key={r}
+                  icon="repeat"
                   label={RECURRENCE_LABELS[r]}
                   selected={task.recurrence === r}
                   // Repetição sem data começa hoje, para aparecer em "Hoje".
@@ -148,10 +151,11 @@ export default function TaskDetailScreen() {
           </Field>
 
           <Button
+            icon={done ? 'arrow-undo-outline' : 'checkmark-circle-outline'}
             title={done ? 'Marcar como pendente' : task.recurrence ? 'Concluir e agendar a próxima' : 'Concluir tarefa'} onPress={() => toggleTask(task.id)} />
-          <Button title="Apagar tarefa" variant="ghost" onPress={onDelete} />
+          <Button title="Apagar tarefa" icon="trash-outline" variant="danger" onPress={onDelete} />
 
-          <ThemedText muted style={styles.meta}>
+          <ThemedText muted variant="caption" style={styles.meta}>
             Criada em {new Date(task.created_at).toLocaleString('pt-BR')}
             {task.completed_at ? `\nConcluída em ${new Date(task.completed_at).toLocaleString('pt-BR')}` : ''}
           </ThemedText>
@@ -161,24 +165,24 @@ export default function TaskDetailScreen() {
   );
 }
 
+/** Cada grupo de opções fica num cartão com título discreto. */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <View style={styles.field}>
-      <ThemedText muted style={styles.label}>
+    <Card style={styles.field}>
+      <ThemedText muted variant="overline">
         {label}
       </ThemedText>
       {children}
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { padding: 16, gap: 20, paddingBottom: 48 },
-  title: { fontSize: 18, fontWeight: '600' },
+  content: { padding: space.lg, gap: space.md, paddingBottom: space.xxxl },
+  title: { fontSize: 18 },
   notes: { minHeight: 110 },
-  field: { gap: 8 },
-  label: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  meta: { fontSize: 13, textAlign: 'center' },
+  field: { padding: space.lg, gap: space.md },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  meta: { textAlign: 'center', marginTop: space.sm },
 });

@@ -7,6 +7,7 @@ import {
   parseQuickAdd,
   searchTasks,
   sortTasks,
+  todayProgress,
 } from '../tasks';
 import type { Task } from '../types';
 
@@ -159,5 +160,16 @@ describe('nextPosition', () => {
   it('vai para o fim', () => {
     expect(nextPosition([])).toBe(1);
     expect(nextPosition([{ position: 3 }, { position: 7 }])).toBe(8);
+  });
+});
+
+describe('todayProgress', () => {
+  it('conta concluídas hoje e abertas de hoje/atrasadas', () => {
+    const doneToday = task({ due_date: '2026-10-09', completed_at: new Date(2026, 9, 9, 10).toISOString() });
+    const doneYesterday = task({ completed_at: new Date(2026, 9, 8, 10).toISOString() });
+    const openToday = task({ due_date: '2026-10-09' });
+    const overdue = task({ due_date: '2026-10-01' });
+    const future = task({ due_date: '2026-10-20' });
+    expect(todayProgress([doneToday, doneYesterday, openToday, overdue, future], TODAY)).toEqual({ done: 1, total: 3 });
   });
 });

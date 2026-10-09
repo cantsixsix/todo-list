@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
 });
 
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
-const USER = { id: '11111111-1111-4111-8111-111111111111', email: 'eden@example.com', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() };
+const USER = { id: '11111111-1111-4111-8111-111111111111', email: 'eden@example.com', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: { name: 'Eden Teste' }, created_at: new Date().toISOString() };
 const exp = Math.floor(Date.now() / 1000) + 3600;
 const TOKEN = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: USER.id, exp, role: 'authenticated', aud: 'authenticated', email: USER.email })}.sig`;
 const db = { tasks: [], lists: [] };
@@ -114,6 +114,11 @@ async function handle(route) {
     await page.goto('http://localhost:8089/');
     await page.getByText('Bem-vindo de volta').filter({ visible: true }).first().waitFor();
     await shot(page, `${label}-01-login`);
+    await page.getByRole('button', { name: 'Crie sua conta' }).filter({ visible: true }).first().click();
+    await page.getByLabel('Nome').waitFor();
+    await shot(page, `${label}-01b-cadastro`);
+    await page.getByRole('button', { name: 'Entrar' }).filter({ visible: true }).first().click();
+    await page.getByText('Bem-vindo de volta').filter({ visible: true }).first().waitFor();
 
     // Senha errada → mensagem traduzida
     await page.getByLabel('E-mail').fill('eden@example.com');
@@ -131,20 +136,24 @@ async function handle(route) {
     await add.fill('Pagar conta de luz !alta');
     await add.press('Enter');
     await add.fill('Ligar para o dentista amanhã !!');
+    await page.getByText('Média').filter({ visible: true }).first().waitFor();
+    await shot(page, `${label}-02b-previa-atalhos`);
     await add.press('Enter');
     await add.fill('Comprar café');
     await add.press('Enter');
     await page.getByText('Pagar conta de luz').filter({ visible: true }).first().waitFor();
+    await page.getByText(/, Eden$/).filter({ visible: true }).first().waitFor();
+    await page.getByText('0 de 2 concluídas hoje').filter({ visible: true }).first().waitFor();
     await page.getByRole('button', { name: /Todas/ }).filter({ visible: true }).first().click();
     await page.getByText('Ligar para o dentista').filter({ visible: true }).first().waitFor();
     await shot(page, `${label}-03-tarefas`);
 
     // Lista
     await page.getByRole('tab', { name: /Listas/ }).or(page.getByRole('link', { name: /Listas/ })).first().click();
-    await page.getByText('+ Nova lista').filter({ visible: true }).first().click();
-    await page.getByPlaceholder('Nome da lista').fill('Trabalho');
-    await page.getByRole('button', { name: 'Criar' }).filter({ visible: true }).first().click();
-    const inList = page.getByPlaceholder('Adicionar em Trabalho…');
+    await page.getByRole('button', { name: 'Nova lista' }).filter({ visible: true }).first().click();
+    await page.getByLabel('Nome da lista').fill('Trabalho');
+    await page.getByRole('button', { name: 'Criar lista' }).filter({ visible: true }).first().click();
+    const inList = page.getByPlaceholder('Adicionar em Trabalho');
     await inList.fill('Enviar relatório !!! hoje');
     await inList.press('Enter');
     await page.getByText('Enviar relatório').filter({ visible: true }).first().waitFor();
@@ -207,6 +216,13 @@ async function handle(route) {
     const d = db.tasks.find((x) => x.title === 'Ligar para o dentista');
     if (!d || d.priority !== 2 || !d.due_date) errors.push(`${label}: atalhos não aplicados: ${JSON.stringify(d)}`);
 
+    await page.getByRole('button', { name: 'Dicas de uso' }).filter({ visible: true }).first().click();
+    await page.getByText('Prioridade ao digitar').filter({ visible: true }).first().waitFor();
+    await page.goBack();
+    await page.getByRole('button', { name: 'Termos de uso' }).filter({ visible: true }).first().click();
+    await page.getByText('Uso permitido').filter({ visible: true }).first().waitFor();
+    await shot(page, `${label}-08-termos`);
+    await page.goBack();
     await page.getByRole('button', { name: 'Sair' }).filter({ visible: true }).first().click();
     await page.getByText('Bem-vindo de volta').filter({ visible: true }).first().waitFor();
     await ctx.close();

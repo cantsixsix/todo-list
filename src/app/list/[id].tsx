@@ -9,11 +9,12 @@ import { EmptyState } from '@/components/EmptyState';
 import { QuickAdd } from '@/components/QuickAdd';
 import { Screen } from '@/components/Screen';
 import { TaskSectionList } from '@/components/TaskSectionList';
-import { Button, Chip, TextField } from '@/components/ui';
+import { Button, Card, Chip, IconBadge, ProgressBar, TextField, ThemedText } from '@/components/ui';
 import { groupByDue, isCompleted, sortTasks } from '@/lib/tasks';
 import { useData } from '@/providers/DataProvider';
 import { LIST_COLORS } from '@/theme/colors';
 import { useTheme } from '@/theme/ThemeProvider';
+import { radius, space } from '@/theme/tokens';
 
 export default function ListScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,12 +25,14 @@ export default function ListScreen() {
   const [name, setName] = useState(list?.name ?? '');
   const [showDone, setShowDone] = useState(false);
 
+  const mineAll = useMemo(() => tasks.filter((t) => t.list_id === id), [tasks, id]);
+  const doneCount = mineAll.filter(isCompleted).length;
   const sections = useMemo(() => {
-    const mine = tasks.filter((t) => t.list_id === id);
+    const mine = mineAll;
     const open = groupByDue(mine.filter((t) => !isCompleted(t)));
     const done = sortTasks(mine.filter(isCompleted));
     return showDone && done.length ? [...open, { key: 'done', title: 'Concluídas', data: done }] : open;
-  }, [tasks, id, showDone]);
+  }, [mineAll, showDone]);
 
   if (!list) {
     return (
@@ -55,7 +58,7 @@ export default function ListScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          title: list.name,
+          title: '',
           headerRight: () => (
             <Pressable
               onPress={() => {
@@ -93,8 +96,27 @@ export default function ListScreen() {
           </View>
         ) : null}
 
+        <Card style={styles.summary}>
+          <View style={styles.summaryTop}>
+            <IconBadge name="list" color={list.color} size={40} />
+            <View style={styles.flex}>
+              <ThemedText variant="title" numberOfLines={1}>
+                {list.name}
+              </ThemedText>
+              <ThemedText muted variant="caption">
+                {mineAll.length - doneCount} {mineAll.length - doneCount === 1 ? 'aberta' : 'abertas'} · {doneCount}{' '}
+                {doneCount === 1 ? 'concluída' : 'concluídas'}
+              </ThemedText>
+            </View>
+          </View>
+          <ProgressBar value={mineAll.length ? doneCount / mineAll.length : 0} color={list.color} height={6} />
+        </Card>
         <View style={styles.toggle}>
-          <Chip label={showDone ? 'Ocultar concluídas' : 'Mostrar concluídas'} onPress={() => setShowDone((s) => !s)} />
+          <Chip
+            icon={showDone ? 'eye-off-outline' : 'eye-outline'}
+            label={showDone ? 'Ocultar concluídas' : 'Mostrar concluídas'}
+            onPress={() => setShowDone((s) => !s)}
+          />
         </View>
 
         <TaskSectionList
@@ -104,7 +126,7 @@ export default function ListScreen() {
         />
 
         <View style={styles.bottom}>
-          <QuickAdd onAdd={addTask} defaults={{ list_id: list.id }} placeholder={`Adicionar em ${list.name}…`} />
+          <QuickAdd onAdd={addTask} defaults={{ list_id: list.id }} placeholder={`Adicionar em ${list.name}`} />
         </View>
       </KeyboardAvoidingView>
     </Screen>
@@ -114,10 +136,12 @@ export default function ListScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   headerBtn: { paddingHorizontal: 12 },
-  edit: { margin: 16, padding: 16, gap: 14, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth },
+  edit: { margin: space.lg, marginBottom: 0, padding: space.lg, gap: space.md, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
+  summary: { marginHorizontal: space.lg, marginTop: space.lg, padding: space.lg, gap: space.md },
+  summaryTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   colors: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   swatch: { width: 32, height: 32, borderRadius: 16, borderWidth: 3 },
   editActions: { flexDirection: 'row', justifyContent: 'space-between' },
-  toggle: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8 },
-  bottom: { padding: 12 },
+  toggle: { flexDirection: 'row', paddingHorizontal: space.lg, paddingTop: space.md },
+  bottom: { paddingHorizontal: space.md, paddingTop: space.sm, paddingBottom: space.md },
 });

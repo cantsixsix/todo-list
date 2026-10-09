@@ -141,3 +141,14 @@ export function parseQuickAdd(input: string, today: Date = new Date()): {
 export function nextPosition(tasks: { position: number }[]): number {
   return tasks.reduce((max, t) => Math.max(max, t.position), 0) + 1;
 }
+
+/**
+ * Progresso do dia: tarefas de hoje (incluindo atrasadas) já concluídas
+ * hoje versus o total. Usado na barra de progresso da tela inicial.
+ */
+export function todayProgress(tasks: Task[], today: Date = new Date()): { done: number; total: number } {
+  const todayIso = toISODate(today);
+  const open = tasks.filter((t) => !isCompleted(t) && t.due_date !== null && t.due_date <= todayIso).length;
+  const done = tasks.filter((t) => t.completed_at !== null && toISODate(new Date(t.completed_at)) === todayIso).length;
+  return { done, total: open + done };
+}
