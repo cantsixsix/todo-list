@@ -4,10 +4,10 @@
  */
 export const palettes = {
   light: {
-    background: '#F5F6FA',
+    background: '#F7F8FA',
     surface: '#FFFFFF',
-    surfaceAlt: '#EEF0F6',
-    border: '#E3E6EE',
+    surfaceAlt: '#F0F2F5',
+    border: '#E6E8EC',
     text: '#0F172A',
     textMuted: '#64748B',
     textSubtle: '#94A3B8',
@@ -15,6 +15,8 @@ export const palettes = {
     primaryText: '#FFFFFF',
     /** Fundo suave da cor principal (item selecionado, destaque). */
     primarySoft: '#EEF0FF',
+    /** Texto em destaque (links, item ativo). Separado de `primary` por contraste. */
+    link: '#4F46E5',
     danger: '#DC2626',
     dangerSoft: '#FEECEC',
     success: '#16A34A',
@@ -25,15 +27,17 @@ export const palettes = {
   },
   dark: {
     background: '#0B0D12',
-    surface: '#151821',
-    surfaceAlt: '#1D212C',
-    border: '#262B38',
+    surface: '#13161E',
+    surfaceAlt: '#1B1F29',
+    border: '#242936',
     text: '#F1F5F9',
     textMuted: '#94A3B8',
     textSubtle: '#64748B',
-    primary: '#8B8CFF',
-    primaryText: '#0B0D12',
-    primarySoft: '#23254A',
+    // Mesmo índigo da marca, só um pouco mais claro para contrastar com o fundo escuro.
+    primary: '#6366F1',
+    primaryText: '#FFFFFF',
+    primarySoft: '#1E1F3A',
+    link: '#A5B4FC',
     danger: '#F87171',
     dangerSoft: '#3A1D22',
     success: '#4ADE80',

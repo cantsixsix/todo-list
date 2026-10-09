@@ -145,7 +145,7 @@ export default function SignInScreen() {
         <Text
           onPress={() => switchMode('forgot')}
           accessibilityRole="button"
-          style={[type.small, styles.forgot, { color: colors.primary, fontFamily: fonts.semibold }]}
+          style={[type.small, styles.forgot, { color: colors.link, fontFamily: fonts.semibold }]}
         >
           Esqueci minha senha
         </Text>
@@ -173,11 +173,11 @@ export default function SignInScreen() {
       {mode === 'signUp' ? (
         <ThemedText muted variant="caption" style={styles.center}>
           Ao criar a conta você concorda com os{' '}
-          <Link href="/terms" style={{ color: colors.primary }}>
+          <Link href="/terms" style={{ color: colors.link }}>
             Termos de Uso
           </Link>{' '}
           e a{' '}
-          <Link href="/privacy" style={{ color: colors.primary }}>
+          <Link href="/privacy" style={{ color: colors.link }}>
             Política de Privacidade
           </Link>
           .
@@ -189,14 +189,14 @@ export default function SignInScreen() {
       {mode === 'signIn' ? (
         <ThemedText muted variant="small" style={styles.center}>
           Novo por aqui?{' '}
-          <Text onPress={() => switchMode('signUp')} accessibilityRole="button" style={{ color: colors.primary, fontFamily: fonts.semibold }}>
+          <Text onPress={() => switchMode('signUp')} accessibilityRole="button" style={{ color: colors.link, fontFamily: fonts.semibold }}>
             Crie sua conta
           </Text>
         </ThemedText>
       ) : (
         <ThemedText muted variant="small" style={styles.center}>
           Já tem conta?{' '}
-          <Text onPress={() => switchMode('signIn')} accessibilityRole="button" style={{ color: colors.primary, fontFamily: fonts.semibold }}>
+          <Text onPress={() => switchMode('signIn')} accessibilityRole="button" style={{ color: colors.link, fontFamily: fonts.semibold }}>
             Entrar
           </Text>
         </ThemedText>

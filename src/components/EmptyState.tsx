@@ -21,7 +21,7 @@ export function EmptyState({
       {/* Círculos concêntricos: dão "peso" de ilustração sem precisar de imagem. */}
       <View style={[styles.halo, { backgroundColor: colors.primarySoft, opacity: 0.5 }]}>
         <View style={[styles.circle, { backgroundColor: colors.primarySoft }]}>
-          <Ionicons name={icon} size={34} color={colors.primary} />
+          <Ionicons name={icon} size={34} color={colors.link} />
         </View>
       </View>
       <ThemedText variant="heading" style={styles.center}>

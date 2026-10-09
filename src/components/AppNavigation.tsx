@@ -62,9 +62,9 @@ export function BottomBar(props: BottomTabBarProps) {
             style={styles.bottomItem}
           >
             <View style={[styles.pill, focused && { backgroundColor: colors.primarySoft }]}>
-              <Ionicons name={focused ? item.iconActive : item.icon} size={22} color={focused ? colors.primary : colors.textMuted} />
+              <Ionicons name={focused ? item.iconActive : item.icon} size={22} color={focused ? colors.link : colors.textMuted} />
             </View>
-            <Text style={[type.caption, { fontSize: 12, color: focused ? colors.primary : colors.textMuted, fontFamily: focused ? fonts.semibold : fonts.medium }]}>
+            <Text style={[type.caption, { fontSize: 12, color: focused ? colors.link : colors.textMuted, fontFamily: focused ? fonts.semibold : fonts.medium }]}>
               {item.label}
             </Text>
           </Pressable>
@@ -115,12 +115,12 @@ export function Sidebar(props: BottomTabBarProps) {
                 },
               ]}
             >
-              <Ionicons name={focused ? item.iconActive : item.icon} size={20} color={focused ? colors.primary : colors.textMuted} />
-              <Text style={[type.small, styles.flex, { color: focused ? colors.primary : colors.text, fontFamily: focused ? fonts.semibold : fonts.medium }]}>
+              <Ionicons name={focused ? item.iconActive : item.icon} size={20} color={focused ? colors.link : colors.textMuted} />
+              <Text style={[type.small, styles.flex, { color: focused ? colors.link : colors.text, fontFamily: focused ? fonts.semibold : fonts.medium }]}>
                 {item.label}
               </Text>
               {route.name === 'index' && todayCount > 0 ? (
-                <Text style={[type.caption, { color: focused ? colors.primary : colors.textMuted }]}>{todayCount}</Text>
+                <Text style={[type.caption, { color: focused ? colors.link : colors.textMuted }]}>{todayCount}</Text>
               ) : null}
             </Pressable>
           );

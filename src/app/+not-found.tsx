@@ -11,7 +11,7 @@ export default function NotFound() {
     <Screen style={styles.center}>
       <Stack.Screen options={{ title: 'Ops!' }} />
       <EmptyState icon="compass-outline" title="Página não encontrada" />
-      <Link href="/" style={{ color: colors.primary, fontSize: 16 }}>
+      <Link href="/" style={{ color: colors.link, fontSize: 16 }}>
         Voltar ao início
       </Link>
     </Screen>

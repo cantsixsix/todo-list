@@ -48,7 +48,7 @@ export function QuickAdd({ onAdd, defaults, placeholder = 'Adicionar tarefa' }: 
       ]}
     >
       <View style={styles.row}>
-        <Ionicons name="add-circle" size={24} color={colors.primary} />
+        <Ionicons name="add-circle" size={24} color={colors.link} />
         <TextInput
           value={text}
           onChangeText={setText}
@@ -79,8 +79,8 @@ export function QuickAdd({ onAdd, defaults, placeholder = 'Adicionar tarefa' }: 
         <View style={styles.preview} accessibilityLiveRegion="polite">
           {due ? (
             <View style={[styles.tag, { backgroundColor: colors.primarySoft }]}>
-              <Ionicons name="calendar-clear-outline" size={12} color={colors.primary} />
-              <Text style={[type.caption, { color: colors.primary }]}>{formatDueDate(due)}</Text>
+              <Ionicons name="calendar-clear-outline" size={12} color={colors.link} />
+              <Text style={[type.caption, { color: colors.link }]}>{formatDueDate(due)}</Text>
             </View>
           ) : null}
           {priority ? (

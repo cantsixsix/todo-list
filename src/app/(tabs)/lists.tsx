@@ -110,9 +110,9 @@ export default function ListsScreen() {
                 ]}
               >
                 <View style={[styles.plus, { backgroundColor: colors.primarySoft }]}>
-                  <Ionicons name="add" size={22} color={colors.primary} />
+                  <Ionicons name="add" size={22} color={colors.link} />
                 </View>
-                <ThemedText variant="small" style={{ color: colors.primary }}>
+                <ThemedText variant="small" style={{ color: colors.link }}>
                   Nova lista
                 </ThemedText>
               </Pressable>

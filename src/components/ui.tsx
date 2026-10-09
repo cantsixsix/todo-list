@@ -52,7 +52,7 @@ export function Button({
 }) {
   const { colors } = useTheme();
   const bg = { primary: colors.primary, secondary: colors.surfaceAlt, danger: colors.dangerSoft, ghost: 'transparent' }[variant];
-  const fg = { primary: colors.primaryText, secondary: colors.text, danger: colors.danger, ghost: colors.primary }[variant];
+  const fg = { primary: colors.primaryText, secondary: colors.text, danger: colors.danger, ghost: colors.link }[variant];
   const isDisabled = disabled || loading;
   return (
     <Pressable
@@ -218,7 +218,7 @@ export function Avatar({ name, size = 44 }: { name: string; size?: number }) {
       .join('') || '?';
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2, backgroundColor: colors.primarySoft }]}>
-      <Text style={{ fontFamily: fonts.bold, fontSize: size * 0.38, color: colors.primary }}>{initials}</Text>
+      <Text style={{ fontFamily: fonts.bold, fontSize: size * 0.38, color: colors.link }}>{initials}</Text>
     </View>
   );
 }

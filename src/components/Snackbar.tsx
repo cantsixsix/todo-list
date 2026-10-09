@@ -59,7 +59,7 @@ export function SnackbarProvider({ children }: { children: ReactNode }) {
                 }}
                 hitSlop={8}
               >
-                <Text style={[type.small, { color: colors.primary, fontFamily: fonts.bold }]}>
+                <Text style={[type.small, { color: colors.link, fontFamily: fonts.bold }]}>
                   {message.actionLabel}
                 </Text>
               </Pressable>
