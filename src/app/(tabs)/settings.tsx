@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { confirm } from '@/components/confirm';
+import { PageHeader } from '@/components/PageHeader';
 import { Screen } from '@/components/Screen';
 import { SettingsRow } from '@/components/SettingsRow';
 import { useSnackbar } from '@/components/Snackbar';
@@ -66,6 +67,9 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.bleed}>
+          <PageHeader title="Ajustes" />
+        </View>
         <Card style={styles.profile}>
           <View style={styles.profileTop}>
             <Avatar name={displayName} size={56} />
@@ -102,10 +106,9 @@ export default function SettingsScreen() {
 
         <Section title="Ajuda">
           <Card>
-            <SettingsRow icon="bulb" color="#F59E0B" label="Dicas de uso" onPress={() => router.push('/tips')} />
+            <SettingsRow icon="bulb-outline" label="Dicas de uso" onPress={() => router.push('/tips')} />
             <SettingsRow
-              icon="chatbubble-ellipses"
-              color="#0EA5E9"
+              icon="chatbubble-ellipses-outline"
               label="Enviar feedback"
               onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Feedback%20-%20Tarefas`)}
               last
@@ -115,16 +118,16 @@ export default function SettingsScreen() {
 
         <Section title="Sobre">
           <Card>
-            <SettingsRow icon="shield-checkmark" color="#10B981" label="Política de privacidade" onPress={() => router.push('/privacy')} />
-            <SettingsRow icon="document-text" color="#64748B" label="Termos de uso" onPress={() => router.push('/terms')} />
-            <SettingsRow icon="information-circle" color="#4F46E5" label="Versão" value={Constants.expoConfig?.version ?? '1.0.0'} last />
+            <SettingsRow icon="shield-checkmark-outline" label="Política de privacidade" onPress={() => router.push('/privacy')} />
+            <SettingsRow icon="document-text-outline" label="Termos de uso" onPress={() => router.push('/terms')} />
+            <SettingsRow icon="information-circle-outline" label="Versão" value={Constants.expoConfig?.version ?? '1.0.0'} last />
           </Card>
         </Section>
 
         <Section title="Conta">
           <Card>
-            <SettingsRow icon="log-out" color="#64748B" label="Sair" onPress={signOut} />
-            <SettingsRow icon="trash" color={colors.danger} label={deleting ? 'Excluindo…' : 'Excluir minha conta'} danger onPress={deleting ? undefined : onDelete} last />
+            <SettingsRow icon="log-out-outline" label="Sair" onPress={signOut} />
+            <SettingsRow icon="trash-outline" label={deleting ? 'Excluindo…' : 'Excluir minha conta'} danger onPress={deleting ? undefined : onDelete} last />
           </Card>
         </Section>
       </ScrollView>
@@ -182,7 +185,8 @@ function Stat({ label, value, color }: { label: string; value: number; color?: s
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  content: { padding: space.lg, gap: space.xl, paddingBottom: space.xxxl },
+  content: { paddingHorizontal: space.lg, gap: space.xl, paddingBottom: space.xxxl },
+  bleed: { marginHorizontal: -space.lg, marginBottom: -space.md },
   profile: { padding: space.lg, gap: space.lg },
   profileTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   editBtn: { minHeight: 36, paddingHorizontal: space.md },

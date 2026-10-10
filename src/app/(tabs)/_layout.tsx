@@ -20,10 +20,10 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
-      {/* A tela inicial desenha o próprio cabeçalho (saudação + progresso). */}
+      {/* As abas desenham o próprio cabeçalho com <PageHeader> (mesmo padrão nas três). */}
       <Tabs.Screen name="index" options={{ title: 'Tarefas', headerShown: false }} />
-      <Tabs.Screen name="lists" options={{ title: 'Listas' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Ajustes' }} />
+      <Tabs.Screen name="lists" options={{ title: 'Listas', headerShown: false }} />
+      <Tabs.Screen name="settings" options={{ title: 'Ajustes', headerShown: false }} />
     </Tabs>
   );
 }

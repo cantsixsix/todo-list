@@ -227,7 +227,10 @@ Salva sozinho: título e notas quando o campo perde o foco; data, prioridade, re
 | `Screen.tsx` | Centraliza o conteúdo numa coluna de até 720 px em telas grandes |
 | `SetupNeeded.tsx` | Instruções quando o `.env.local` não foi configurado |
 
-## 7. Tema (`src/theme/`)
+## 7. Tema e sistema de design (`src/theme/`)
+`tokens.ts` define as escalas fixas (espaçamento, cantos, tipografia Inter, sombras); `brand.ts`, as cores da marca, que não mudam com o tema. `PageHeader` e `BrandMark` garantem o mesmo cabeçalho e o mesmo logo em todas as telas. Regras visuais em `docs/MARCA.md`.
+
+
 `colors.ts` define as paletas clara e escura com **nomes de função** (`background`, `surface`, `text`, `primary`, `danger`...), nunca cores soltas nas telas. `ThemeProvider` escolhe a paleta (automático, segue o sistema; ou claro/escuro manual, salvo no aparelho), e `useTheme()` entrega as cores para qualquer componente. Trocar a identidade visual do app inteiro é mexer em um arquivo.
 
 ---

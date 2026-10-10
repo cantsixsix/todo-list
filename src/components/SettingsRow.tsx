@@ -5,11 +5,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
 import { space } from '@/theme/tokens';
 
-import { IconBadge, ThemedText } from './ui';
+import { ThemedText } from './ui';
 
 export function SettingsRow({
   icon,
-  color,
   label,
   value,
   onPress,
@@ -17,7 +16,6 @@ export function SettingsRow({
   last,
 }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
-  color: string;
   label: string;
   value?: string;
   onPress?: () => void;
@@ -33,8 +31,8 @@ export function SettingsRow({
       accessibilityLabel={value ? `${label}, ${value}` : label}
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.surfaceAlt : 'transparent' }]}
     >
-      <IconBadge name={icon} color={color} size={30} />
-      <View style={[styles.body, !last && { borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+      <Ionicons name={icon} size={20} color={danger ? colors.danger : colors.textMuted} />
+      <View style={[styles.body, !last && { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
         <ThemedText variant="bodyMedium" style={[styles.flex, danger && { color: colors.danger }]}>
           {label}
         </ThemedText>

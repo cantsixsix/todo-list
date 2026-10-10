@@ -13,9 +13,9 @@ import { applyFilter } from '@/lib/tasks';
 import { useAuth } from '@/providers/AuthProvider';
 import { useData } from '@/providers/DataProvider';
 import { useTheme } from '@/theme/ThemeProvider';
-import { BRAND } from '@/theme/brand';
 import { fonts, radius, space, type } from '@/theme/tokens';
 
+import { BrandMark } from './BrandMark';
 import { Avatar } from './ui';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -85,9 +85,7 @@ export function Sidebar(props: BottomTabBarProps) {
   return (
     <View role="tablist" style={[styles.sidebar, { backgroundColor: colors.surface, borderRightColor: colors.border }]}>
       <View style={styles.brand}>
-        <View style={[styles.logo, { backgroundColor: BRAND.indigo }]}>
-          <Ionicons name="checkmark" size={20} color={BRAND.onBrand} />
-        </View>
+        <BrandMark size={32} />
         <Text style={[type.heading, { color: colors.text, fontFamily: fonts.bold }]}>Tarefas</Text>
       </View>
 
@@ -149,7 +147,6 @@ const styles = StyleSheet.create({
   pill: { width: 56, height: 30, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   sidebar: { width: 248, borderRightWidth: StyleSheet.hairlineWidth, paddingVertical: space.xl, paddingHorizontal: space.md },
   brand: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, paddingHorizontal: space.sm, marginBottom: space.xl },
-  logo: { width: 32, height: 32, borderRadius: radius.sm + 2, alignItems: 'center', justifyContent: 'center' },
   sideItems: { gap: space.xs, flex: 1 },
   sideItem: {
     flexDirection: 'row',

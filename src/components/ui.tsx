@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 
 import { useTheme } from '@/theme/ThemeProvider';
-import { elevation, fonts, radius, space, type, type TypeVariant } from '@/theme/tokens';
+import { fonts, radius, space, type, type TypeVariant } from '@/theme/tokens';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -62,7 +62,6 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         { backgroundColor: bg, opacity: isDisabled ? 0.5 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
-        variant === 'primary' && !isDisabled ? elevation(1, colors.shadow) : null,
         style,
       ]}
       {...props}
@@ -167,16 +166,10 @@ export function Chip({
 }
 
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  // Visual limpo: cartões só com borda fina; sombra fica para o que flutua.
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-        scheme === 'light' ? elevation(1, colors.shadow) : null,
-        style,
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, style]}>
       {children}
     </View>
   );
@@ -247,7 +240,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   count: { minWidth: 20, paddingHorizontal: 6, borderRadius: radius.pill, alignItems: 'center' },
-  card: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  card: { borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden' },
   track: { width: '100%', borderRadius: radius.pill, overflow: 'hidden' },
   iconBadge: { alignItems: 'center', justifyContent: 'center' },
   avatar: { alignItems: 'center', justifyContent: 'center' },

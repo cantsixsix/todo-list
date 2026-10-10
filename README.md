@@ -94,7 +94,7 @@ e2e/                   teste no navegador
 docs/                  guias
 ```
 
-A explicação completa do código, arquivo por arquivo, está em [`docs/GUIA_DO_CODIGO.md`](docs/GUIA_DO_CODIGO.md).
+A explicação completa do código, arquivo por arquivo, está em [`docs/GUIA_DO_CODIGO.md`](docs/GUIA_DO_CODIGO.md). Logo, cores, tipografia e tom de voz: [`docs/MARCA.md`](docs/MARCA.md).
 
 ## Licença
 

@@ -113,7 +113,6 @@ export default function ListScreen() {
         </Card>
         <View style={styles.toggle}>
           <Chip
-            icon={showDone ? 'eye-off-outline' : 'eye-outline'}
             label={showDone ? 'Ocultar concluídas' : 'Mostrar concluídas'}
             onPress={() => setShowDone((s) => !s)}
           />

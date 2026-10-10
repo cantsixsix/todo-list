@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
+import { PageHeader } from '@/components/PageHeader';
 import { Screen } from '@/components/Screen';
 import { Button, Card, IconBadge, ProgressBar, TextField, ThemedText } from '@/components/ui';
 import { isCompleted } from '@/lib/tasks';
@@ -11,13 +12,13 @@ import type { TaskList } from '@/lib/types';
 import { useData } from '@/providers/DataProvider';
 import { LIST_COLORS } from '@/theme/colors';
 import { useTheme } from '@/theme/ThemeProvider';
-import { elevation, radius, space } from '@/theme/tokens';
+import { radius, space } from '@/theme/tokens';
 import { useIsWide } from '@/theme/useLayout';
 
 type Cell = TaskList | 'new';
 
 export default function ListsScreen() {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const wide = useIsWide();
   const columns = wide ? 3 : 2;
   const { lists, tasks, addList } = useData();
@@ -57,9 +58,12 @@ export default function ListsScreen() {
         columnWrapperStyle={styles.gap}
         ListHeaderComponent={
           <View style={styles.header}>
-            <ThemedText muted>
-              {lists.length ? `${lists.length} ${lists.length === 1 ? 'lista' : 'listas'}` : 'Separe suas tarefas por assunto.'}
-            </ThemedText>
+            <View style={styles.bleed}>
+              <PageHeader
+                eyebrow={lists.length ? `${lists.length} ${lists.length === 1 ? 'lista' : 'listas'}` : 'Separe suas tarefas por assunto'}
+                title="Listas"
+              />
+            </View>
             {creating ? (
               <Card style={styles.form}>
                 <ThemedText variant="heading">Nova lista</ThemedText>
@@ -128,7 +132,6 @@ export default function ListsScreen() {
                 styles.cell,
                 styles.listCell,
                 { backgroundColor: colors.surface, borderColor: colors.border, transform: [{ scale: pressed ? 0.98 : 1 }] },
-                scheme === 'light' ? elevation(1, colors.shadow) : null,
               ]}
             >
               <IconBadge name="list" color={item.color} />
@@ -150,11 +153,12 @@ export default function ListsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: space.lg, paddingBottom: space.xxxl, gap: space.md },
+  content: { paddingHorizontal: space.lg, paddingBottom: space.xxxl, gap: space.md },
+  bleed: { marginHorizontal: -space.lg, marginBottom: -space.md },
   header: { gap: space.lg, marginBottom: space.xs },
   gap: { gap: space.md },
   cell: { flex: 1, minHeight: 148, borderRadius: radius.lg },
-  listCell: { padding: space.lg, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'space-between', gap: space.md },
+  listCell: { padding: space.lg, borderWidth: 1, justifyContent: 'space-between', gap: space.md },
   cellText: { gap: 2 },
   newCell: { borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   plus: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },

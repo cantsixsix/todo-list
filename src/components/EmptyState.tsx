@@ -18,11 +18,8 @@ export function EmptyState({
   const { colors } = useTheme();
   return (
     <View style={styles.wrap}>
-      {/* Círculos concêntricos: dão "peso" de ilustração sem precisar de imagem. */}
-      <View style={[styles.halo, { backgroundColor: colors.primarySoft, opacity: 0.5 }]}>
-        <View style={[styles.circle, { backgroundColor: colors.primarySoft }]}>
-          <Ionicons name={icon} size={34} color={colors.link} />
-        </View>
+      <View style={[styles.circle, { backgroundColor: colors.surfaceAlt }]}>
+        <Ionicons name={icon} size={30} color={colors.textMuted} />
       </View>
       <ThemedText variant="heading" style={styles.center}>
         {title}
@@ -38,7 +35,6 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xxxl, paddingHorizontal: space.xxl, gap: space.sm },
-  halo: { width: 116, height: 116, borderRadius: 58, alignItems: 'center', justifyContent: 'center', marginBottom: space.md },
-  circle: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
+  circle: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: space.sm },
   center: { textAlign: 'center', maxWidth: 320 },
 });

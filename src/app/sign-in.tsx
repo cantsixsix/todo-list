@@ -9,6 +9,7 @@ import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, type TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BrandMark } from '@/components/BrandMark';
 import { Button, TextField, ThemedText } from '@/components/ui';
 import { useAuth } from '@/providers/AuthProvider';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -85,9 +86,7 @@ export default function SignInScreen() {
     <View style={styles.form}>
       {!wide ? (
         <View style={styles.brandSmall}>
-          <View style={[styles.logo, { backgroundColor: BRAND.indigo }]}>
-            <Ionicons name="checkmark" size={30} color={BRAND.onBrand} />
-          </View>
+          <BrandMark size={56} />
           <Text style={[type.title, { color: colors.text, fontFamily: fonts.extrabold }]}>Tarefas</Text>
         </View>
       ) : null}
@@ -211,9 +210,7 @@ export default function SignInScreen() {
           {wide ? (
             <View style={[styles.brandPanel, { backgroundColor: BRAND.indigo }]}>
               <View style={styles.brandRow}>
-                <View style={[styles.logoSmall, { backgroundColor: BRAND.onBrand }]}>
-                  <Ionicons name="checkmark" size={22} color={BRAND.indigo} />
-                </View>
+                <BrandMark size={40} inverted />
                 <Text style={[type.title, { color: BRAND.onBrand }]}>Tarefas</Text>
               </View>
               <View style={styles.pitch}>
@@ -249,7 +246,6 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, justifyContent: 'center', padding: space.xl },
   form: { width: '100%', maxWidth: 420, alignSelf: 'center', gap: space.lg },
   brandSmall: { alignItems: 'center', gap: space.md, marginBottom: space.sm },
-  logo: { width: 64, height: 64, borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center' },
   heading: { gap: space.xs + 2 },
   forgot: { alignSelf: 'flex-end', marginTop: -space.xs },
   notice: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.md },
@@ -257,7 +253,6 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   brandPanel: { flex: 1, maxWidth: 520, padding: space.xxxl, justifyContent: 'space-between' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  logoSmall: { width: 40, height: 40, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   pitch: { gap: space.xl },
   pitchTitle: { fontSize: 40, lineHeight: 46, marginBottom: space.sm },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: space.md },

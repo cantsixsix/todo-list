@@ -10,7 +10,7 @@ import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-nat
 import { formatDueDate } from '@/lib/dates';
 import { isCompleted, isOverdue } from '@/lib/tasks';
 import type { Task, TaskList } from '@/lib/types';
-import { priorityColor } from '@/theme/colors';
+import { PRIORITY_LABELS, priorityColor } from '@/theme/colors';
 import { useTheme } from '@/theme/ThemeProvider';
 import { fonts, radius, space, type } from '@/theme/tokens';
 
@@ -60,13 +60,11 @@ function TaskItemBase({ task, list, first, last, onToggle, onLongPress }: Props)
           borderTopRightRadius: first ? radius.lg : 0,
           borderBottomLeftRadius: last ? radius.lg : 0,
           borderBottomRightRadius: last ? radius.lg : 0,
-          borderTopWidth: first ? StyleSheet.hairlineWidth : 0,
+          borderTopWidth: first ? 1 : 0,
         },
       ]}
-      accessibilityLabel={`${task.title}${done ? ', concluída' : ''}`}
+      accessibilityLabel={`${task.title}${done ? ', concluída' : task.priority > 0 ? `, prioridade ${PRIORITY_LABELS[task.priority].toLowerCase()}` : ''}`}
     >
-      {task.priority > 0 && !done ? <View style={[styles.accent, { backgroundColor: pColor }]} /> : null}
-
       <Pressable
         hitSlop={12}
         onPress={toggle}
@@ -121,8 +119,6 @@ function TaskItemBase({ task, list, first, last, onToggle, onLongPress }: Props)
           </View>
         ) : null}
       </View>
-
-      {task.priority > 0 && !done ? <Ionicons name="flag" size={15} color={pColor} /> : null}
     </Pressable>
   );
 }
@@ -138,12 +134,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingVertical: space.md + 2,
     marginHorizontal: space.lg,
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
     overflow: 'hidden',
   },
-  accent: { position: 'absolute', left: 0, top: space.md, bottom: space.md, width: 3, borderTopRightRadius: 3, borderBottomRightRadius: 3 },
   check: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   body: { flex: 1, gap: space.xs + 1 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, flexWrap: 'wrap' },

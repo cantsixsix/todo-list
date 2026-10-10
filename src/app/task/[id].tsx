@@ -104,7 +104,6 @@ export default function TaskDetailScreen() {
                 <Chip
                   key={label}
                   label={label}
-                  icon={p > 0 ? 'flag' : undefined}
                   color={p > 0 ? priorityColor(p, colors) : undefined}
                   selected={task.priority === p}
                   onPress={() => editTask(task.id, { priority: p as Priority })}
@@ -123,7 +122,6 @@ export default function TaskDetailScreen() {
               {RECURRENCES.map((r) => (
                 <Chip
                   key={r}
-                  icon="repeat"
                   label={RECURRENCE_LABELS[r]}
                   selected={task.recurrence === r}
                   // Repetição sem data começa hoje, para aparecer em "Hoje".

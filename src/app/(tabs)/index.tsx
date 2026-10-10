@@ -6,9 +6,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/EmptyState';
+import { PageHeader } from '@/components/PageHeader';
 import { QuickAdd } from '@/components/QuickAdd';
 import { Screen } from '@/components/Screen';
 import { TaskSectionList } from '@/components/TaskSectionList';
@@ -24,11 +24,11 @@ import { useIsWide } from '@/theme/useLayout';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const FILTERS: { key: SmartFilter; label: string; icon: IconName }[] = [
-  { key: 'today', label: 'Hoje', icon: 'sunny-outline' },
-  { key: 'upcoming', label: 'Próximos', icon: 'calendar-outline' },
-  { key: 'all', label: 'Todas', icon: 'layers-outline' },
-  { key: 'completed', label: 'Concluídas', icon: 'checkmark-done-outline' },
+const FILTERS: { key: SmartFilter; label: string }[] = [
+  { key: 'today', label: 'Hoje' },
+  { key: 'upcoming', label: 'Próximos' },
+  { key: 'all', label: 'Todas' },
+  { key: 'completed', label: 'Concluídas' },
 ];
 
 const EMPTY: Record<SmartFilter, { icon: IconName; title: string; subtitle: string }> = {
@@ -43,7 +43,6 @@ const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function TasksScreen() {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const wide = useIsWide();
   const { displayName } = useAuth();
   const { tasks, loading, pendingCount, addTask, clearCompleted } = useData();
@@ -70,28 +69,23 @@ export default function TasksScreen() {
 
   const header = (
     <View style={styles.header}>
-      <View style={styles.greetingRow}>
-        <View style={styles.flex}>
-          <ThemedText muted variant="small">
-            {capitalizeFirst(formatLongDate())}
-          </ThemedText>
-          <ThemedText variant="display" numberOfLines={1}>
-            {greeting()}, {firstName}
-          </ThemedText>
-        </View>
-        {!wide ? (
-          <Pressable onPress={() => router.navigate('/settings')} accessibilityLabel="Abrir ajustes" hitSlop={8}>
-            <Avatar name={displayName} size={42} />
-          </Pressable>
-        ) : null}
+      <View style={styles.bleed}>
+        <PageHeader
+          eyebrow={capitalizeFirst(formatLongDate())}
+          title={`${greeting()}, ${firstName}`}
+          right={
+            !wide ? (
+              <Pressable onPress={() => router.navigate('/settings')} accessibilityLabel="Abrir ajustes" hitSlop={8}>
+                <Avatar name={displayName} size={40} />
+              </Pressable>
+            ) : undefined
+          }
+        />
       </View>
 
       {progress.total > 0 ? (
         <Card style={styles.progressCard}>
           <View style={styles.progressTop}>
-            <View style={[styles.progressIcon, { backgroundColor: pct === 1 ? colors.successSoft : colors.primarySoft }]}>
-              <Ionicons name={pct === 1 ? 'trophy' : 'flash'} size={18} color={pct === 1 ? colors.success : colors.primary} />
-            </View>
             <View style={styles.flex}>
               <ThemedText variant="heading">
                 {pct === 1 ? 'Dia concluído!' : `${progress.done} de ${progress.total} ${progress.total === 1 ? "concluída" : "concluídas"} hoje`}
@@ -100,7 +94,7 @@ export default function TasksScreen() {
                 {pct === 1 ? 'Tudo feito. Bom trabalho!' : pct >= 0.5 ? 'Mais da metade — continue assim.' : 'Um passo de cada vez.'}
               </ThemedText>
             </View>
-            <ThemedText variant="heading" style={{ color: pct === 1 ? colors.success : colors.primary }}>
+            <ThemedText variant="heading" style={{ color: pct === 1 ? colors.success : colors.link }}>
               {Math.round(pct * 100)}%
             </ThemedText>
           </View>
@@ -126,7 +120,6 @@ export default function TasksScreen() {
           <Chip
             key={f.key}
             label={f.label}
-            icon={f.icon}
             count={f.key === 'completed' ? undefined : counts[f.key]}
             selected={filter === f.key}
             onPress={() => setFilter(f.key)}
@@ -151,7 +144,7 @@ export default function TasksScreen() {
   return (
     <Screen>
       <KeyboardAvoidingView
-        style={[styles.flex, { paddingTop: wide ? space.xl : insets.top + space.sm }]}
+        style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {loading ? (
@@ -185,10 +178,9 @@ export default function TasksScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   header: { paddingHorizontal: space.lg, gap: space.lg, paddingBottom: space.xs },
-  greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  bleed: { marginHorizontal: -space.lg, marginBottom: -space.md },
   progressCard: { padding: space.lg, gap: space.md },
   progressTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  progressIcon: { width: 38, height: 38, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   offline: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.md },
   chips: { gap: space.sm },
   loading: { marginTop: space.xxxl },
